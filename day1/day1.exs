@@ -10,3 +10,6 @@ defmodule Day1 do
   defp basement_position([?\)|t], p, f), do: basement_position(t, p+1, f-1)
 
 end
+
+# iex> input |> String.to_char_list |> Day1.floors
+# iex> input |> String.to_char_list |> Day1.basement_position
