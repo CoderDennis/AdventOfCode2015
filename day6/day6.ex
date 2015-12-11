@@ -5,7 +5,9 @@ defmodule Day6 do
     |> Enum.map(&parse_instruction/1)
     |> Enum.each(&(do_instruction(&1, lights)))
 
-    Enum.count(lights, fn {_, l} -> GenServer.call(l, :on?) end)
+    lights
+    |> Enum.map(fn {_, l} -> GenServer.call(l, :brightness) end)
+    |> Enum.sum
   end
 
   def create_light() do
@@ -45,13 +47,14 @@ defmodule Day6.Light do
   ## Server Callbacks
 
   def init(:ok) do
-    {:ok, false}
+    {:ok, 0}
   end
 
-  def handle_call(:on?, _from, state), do: {:reply, state, state}
+  def handle_call(:brightness, _from, state), do: {:reply, state, state}
 
-  def handle_cast(:"turn on", _state), do: {:noreply, true}
-  def handle_cast(:toggle, state), do: {:noreply, !state}
-  def handle_cast(:"turn off", _state), do: {:noreply, false}
+  def handle_cast(:"turn on", state), do: {:noreply, state + 1}
+  def handle_cast(:"turn off", 0), do: {:noreply, 0}
+  def handle_cast(:"turn off", state), do: {:noreply, state - 1}
+  def handle_cast(:toggle, state), do: {:noreply, state + 2}
 
 end
