@@ -58,7 +58,9 @@ defmodule Day5 do
 
   """
   def is_nice2?(string) do
-    false
+    chars = String.to_char_list(string)
+    pair_appears_twice?(chars) &&
+      letter_repeats_with_one_between?(chars)
   end
 
   @doc ~s"""
@@ -80,8 +82,35 @@ defmodule Day5 do
   def pair_appears_twice?(list) do
     list
     |> Enum.chunk(2, 1)
-    |> Enum.group_by(&(&1))
-    |> Enum.any?(fn {_, l} -> Enum.count(l) > 1 end)
+    |> Enum.any?(fn p -> sublist_count(p, list, 0) > 1 end)
+  end
+
+  defp sublist_count([a | [b | []]] = pair, [a | [b | t]], count) do
+    sublist_count(pair, t, count + 1)
+  end
+  defp sublist_count(pair, [_h | t], count), do: sublist_count(pair, t, count)
+  defp sublist_count(_, [], count), do: count
+
+  @doc ~s"""
+  # Examples
+
+  iex> Day5.letter_repeats_with_one_between?('xyx')
+  true
+
+  iex> Day5.letter_repeats_with_one_between?('abcdefeghi')
+  true
+
+  iex> Day5.letter_repeats_with_one_between?('aaa')
+  true
+
+  iex> Day5.letter_repeats_with_one_between?('uurcxstgmygtbstg')
+  false
+
+  """
+  def letter_repeats_with_one_between?([]), do: false
+  def letter_repeats_with_one_between?([x | [_y | [x | _]]]), do: true
+  def letter_repeats_with_one_between?([_h | t]) do
+    letter_repeats_with_one_between?(t)
   end
 end
 
