@@ -23,13 +23,14 @@ defmodule Day6 do
   end
 
   def do_instruction(instruction, lights) do
-    (for x <- instruction[:x1]..instruction[:y1],
-        y <- instruction[:x2]..instruction[:y2],
+    (for x <- instruction[:x1]..instruction[:x2],
+         y <- instruction[:y1]..instruction[:y2],
         do: {x,y})
     |> Enum.each(&(GenServer.cast(lights[&1], instruction[:action])))
   end
 end
 
+# iex.bat --erl "+P 1001000"
 # File.stream!("input.txt", [:read, :utf8]) |> Day6.setup_lights
 
 defmodule Day6.Light do
