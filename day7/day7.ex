@@ -6,13 +6,13 @@ defmodule Day7 do
   to create a function for each `wire`.
 
   Because `fn` can't be used as a function name -- or at least this code
-  couldn't handle it -- I appended `0` to the end of each name. That felt
+  couldn't handle it -- I prepended `wire_` to each name. That felt
   easier than checking specifically for `fn`.
 
   To run the sample circuit, just uncomment the  line `for line <- @sample do`
   and comment out the line below that reads the file.
 
-  Calling `Day7.a0` provides the solution to the puzzle.
+  Calling `Day7.wire_a` provides the solution to the puzzle.
 
   Using ets table to cache the values already found. Kept that as an
   implementation detail by adding private functions that have the `tab`
@@ -51,18 +51,18 @@ defmodule Day7 do
     )
     a = case Integer.parse(caps["a"]) do
           {val, ""} -> val
-          :error -> caps["a"] <> "0(tab)"
+          :error -> "wire_" <> caps["a"] <> "(tab)"
         end
     b = case Integer.parse(caps["b"]) do
           {val, ""} -> val
-          :error -> caps["b"] <> "0(tab)"
+          :error -> "wire_" <> caps["b"] <> "(tab)"
         end
     val_accesor = case caps["fun"] do
                     "" -> "#{b}"
                     "NOT" -> "bxor #{b}, 65535"
                     fun -> "#{@funs[fun]} #{a}, #{b}"
                   end
-    name = caps["name"] <> "0"
+    name = "wire_" <> caps["name"]
     body0 = Code.string_to_quoted!(~s/
         tab = :ets.new(:Day7, [:private])
         result = #{name}(tab)
