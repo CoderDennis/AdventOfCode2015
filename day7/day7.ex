@@ -10,11 +10,17 @@ defmodule Day7 do
   easier than checking specifically for `fn`.
 
   To run the sample circuit, just uncomment the  line `for line <- @sample do`
-  and comment out the line below that reads the file to see the code in action.
+  and comment out the line below that reads the file.
 
-  Calling `Day7.a0` should provide the solution to the problem.
+  Calling `Day7.a0` provides the solution to the puzzle.
 
-  This is first attempt at caching the values, but it doesn't work yet.
+  Using ets table to cache the values already found. Kept that as an
+  implementation detail by adding private functions that have the `tab`
+  parameter.
+
+  Thanks to suggestions on the Elixir Slack channel and this blog post
+  http://ineverfinishanyth.in/2014/01/20/memoization-in-elixir/ I was able
+  to make the code gen simpler and add the memoization piece.
   """
 
   @funs %{"AND" => "band",
@@ -23,58 +29,57 @@ defmodule Day7 do
           "RSHIFT" => "bsr"
          }
 
-  @sample ["123 -> x\n",
-           "x AND y -> d\n",
-           "x OR y -> e\n",
-           "x LSHIFT 2 -> fn\n",
-           "y RSHIFT 2 -> g\n",
-           "NOT x -> h\n",
-           "NOT y -> i\n",
+  @sample ["123 -> x",
+           "456 -> y",
+           "x AND y -> d",
+           "x OR y -> e",
+           "x LSHIFT 2 -> f",
+           "y RSHIFT 2 -> g",
+           "NOT x -> h",
+           "NOT y -> i",
            "1 AND x -> j",
-           "456 -> y\n",
            "g -> k",
+           "x LSHIFT 2 -> fn",
            "x OR fn -> fo"
           ]
 
-  for line <- @sample do
-  # for line <- File.stream!(Path.join([__DIR__, "input.txt"]), [], :line) do
-    vals = Regex.named_captures(
-      ~r/((?<a>\w+) )?((?<fun>[A-Z]+) )?(?<b>\w+) -> (?<name>\w+)/,
+  #for line <- @sample do
+  for line <- File.stream!(Path.join([__DIR__, "input.txt"]), [], :line) do
+    caps = Regex.named_captures(
+      ~r/((?<a>[a-z0-9]+) )?((?<fun>[A-Z]+) )?(?<b>\w+) -> (?<name>\w+)/,
       line
     )
-    a = case Integer.parse(vals["a"]) do
+    a = case Integer.parse(caps["a"]) do
           {val, ""} -> val
-          :error -> String.to_atom(vals["a"] <> "0(tab)")
+          :error -> caps["a"] <> "0(tab)"
         end
-    b = case Integer.parse(vals["b"]) do
+    b = case Integer.parse(caps["b"]) do
           {val, ""} -> val
-          :error -> String.to_atom(vals["b"] <> "0(tab)")
+          :error -> caps["b"] <> "0(tab)"
         end
-    val_accesor = case vals["fun"] do
-                    "" -> vals["b"]
-                    "NOT" -> "bxor x, 65535"
+    val_accesor = case caps["fun"] do
+                    "" -> "#{b}"
+                    "NOT" -> "bxor #{b}, 65535"
                     fun -> "#{@funs[fun]} #{a}, #{b}"
                   end
-
-    name = vals["name"] <> "0"
-    body = ~s/
-      def #{name}() do
+    name = caps["name"] <> "0"
+    body0 = Code.string_to_quoted!(~s/
         tab = :ets.new(:Day7, [:private])
-        #{name}(tab)
-      end
-      defp #{name}(tab) do
+        result = #{name}(tab)
+        :ets.delete(tab)
+        result/)
+    body1 = Code.string_to_quoted!(~s/
         case :ets.lookup(tab, :#{name}) do
           [] ->
             r = #{val_accesor}
             :ets.insert(tab, {:#{name}, r})
             r
           [#{name}: r] -> r
-        end
-      end/
-    # IO.puts vals["name"]
-    # IO.puts body
-    IO.inspect Code.string_to_quoted!(body)
-    Code.string_to_quoted!(body)
+        end/)
+    # IO.puts caps["name"]
+    # IO.puts val_accesor
+    def unquote(String.to_atom(name))(), do: unquote(body0)
+    defp unquote(String.to_atom(name))(tab), do: unquote(body1)
   end
 
 end
