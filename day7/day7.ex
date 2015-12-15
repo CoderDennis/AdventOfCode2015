@@ -78,6 +78,7 @@ defmodule Day7 do
         end/)
     # IO.puts caps["name"]
     # IO.puts val_accesor
+    @doc "#{line}"
     def unquote(String.to_atom(name))(), do: unquote(body0)
     defp unquote(String.to_atom(name))(tab), do: unquote(body1)
   end
