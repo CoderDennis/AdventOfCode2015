@@ -2,6 +2,8 @@ defmodule Day7 do
   use Bitwise
 
   @moduledoc """
+  http://adventofcode.com/2015/day/7
+  
   Using compile-time code generation as described in _Metaprogramming Elixir_
   to create a function for each `wire`.
 
